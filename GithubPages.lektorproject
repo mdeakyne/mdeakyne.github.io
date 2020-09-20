@@ -1,8 +1,0 @@
-[project]
-name = GithubPages
-
-[servers.production]
-name = Production
-enabled = yes
-default = yes
-target = ghpages:///mdeakyne/mdeakyne.github.io
