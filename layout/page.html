@@ -1,25 +1,21 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>{{ title }} - {{ subtitle }}</title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width">
-    <link rel="stylesheet" type="text/css" href="{{ base_path }}/css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ title }}</title>
+  <link rel="stylesheet" href="{{ base_path }}/css/style.css">
 </head>
-
 <body id="{{ slug }}">
 
 <nav>
 <section>
-    <span class="home">
-        <a href="{{ base_path }}/">Home</a>
-    </span>
-    <span class="links">
-        <a href="{{ base_path }}/agons/">Agons</a>
-        <a href="{{ base_path }}/badges/">Badges</a>
-        <a href="{{ base_path }}/contact/">Contact</a>
-        <a href="{{ base_path }}/about/">About</a>
-    </span>
+  <span class="home"><a href="{{ base_path }}/">Matt Deakyne</a></span>
+  <span class="links">
+    <a href="{{ base_path }}/writing/">Writing</a>
+    <a href="{{ base_path }}/agons/">Agons</a>
+    <a href="{{ base_path }}/about/">About</a>
+  </span>
 </section>
 </nav>
 
@@ -29,12 +25,12 @@
 
 <footer>
 <section>
-<p>&copy; {{ current_year }} </p>
-<p>
+  <span>&copy; {{ current_year }} Matt Deakyne</span>
+  <span>
     <a href="https://twitter.com/mdeakyne">Twitter</a>
     <a href="https://github.com/mdeakyne">GitHub</a>
-    <a href="https://linkedin.com/mdeakyne">LinkedIn</a>
-</p>
+    <a href="https://www.linkedin.com/in/mdeakyne">LinkedIn</a>
+  </span>
 </section>
 </footer>
 
