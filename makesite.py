@@ -57,7 +57,7 @@ def log(msg, *args):
     sys.stderr.write(msg.format(*args) + '\n')
 
 
-def truncate(text, words=25):
+def truncate(text, words=35):
     """Remove tags and truncate text to the specified number of words."""
     return ' '.join(re.sub('(?s)<.*?>', ' ', text).split()[:words])
 
@@ -78,10 +78,8 @@ def rfc_2822_format(date_str):
 
 def read_content(filename):
     """Read content and metadata from file into a dictionary."""
-    # Read file content.
     text = fread(filename)
 
-    # Read metadata and save it in a dictionary.
     date_slug = os.path.basename(filename).split('.')[0]
     match = re.search(r'^(?:(\d\d\d\d-\d\d-\d\d)-)?(.+)$', date_slug)
     content = {
@@ -89,15 +87,12 @@ def read_content(filename):
         'slug': match.group(2),
     }
 
-    # Read headers.
     end = 0
     for key, val, end in read_headers(text):
         content[key] = val
 
-    # Separate content from headers.
     text = text[end:]
 
-    # Convert Markdown content to HTML.
     if filename.endswith(('.md', '.mkd', '.mkdn', '.mdown', '.markdown')):
         try:
             if _test == 'ImportError':
@@ -107,7 +102,6 @@ def read_content(filename):
         except ImportError as e:
             log('WARNING: Cannot render Markdown in {}: {}', filename, str(e))
 
-    # Update the dictionary with content and RFC 2822 date.
     content.update({
         'content': text,
         'rfc_2822_date': rfc_2822_format(content['date'])
@@ -132,7 +126,6 @@ def make_pages(src, dst, layout, **params):
 
         page_params = dict(params, **content)
 
-        # Populate placeholders in content if content-rendering is enabled.
         if page_params.get('render') == 'yes':
             rendered_content = render(page_params['content'], **page_params)
             page_params['content'] = rendered_content
@@ -167,25 +160,21 @@ def make_list(posts, dst, list_layout, item_layout, **params):
 
 
 def main():
-    # Create a new _site directory from scratch.
     if os.path.isdir('_site'):
         shutil.rmtree('_site')
     shutil.copytree('static', '_site')
 
-    # Default parameters.
     params = {
         'base_path': '',
-        'subtitle': 'A simple site',
+        'subtitle': 'Matt Deakyne',
         'author': 'Matt Deakyne',
-        'site_url': 'http://localhost:8000',
+        'site_url': 'https://mdeakyne.github.io',
         'current_year': datetime.datetime.now().year
     }
 
-    # If params.json exists, load it.
     if os.path.isfile('params.json'):
         params.update(json.loads(fread('params.json')))
 
-    # Load layouts.
     page_layout = fread('layout/page.html')
     post_layout = fread('layout/post.html')
     list_layout = fread('layout/list.html')
@@ -193,35 +182,44 @@ def main():
     feed_xml = fread('layout/feed.xml')
     item_xml = fread('layout/item.xml')
 
-    # Combine layouts to form final layouts.
     post_layout = render(page_layout, content=post_layout)
     list_layout = render(page_layout, content=list_layout)
 
-    # Create site pages.
+    # Generate blog posts first so we can surface recent ones on the home page
+    blog_posts = make_pages('content/blog/*.md',
+                            '_site/writing/{{ slug }}/index.html',
+                            post_layout, blog='writing', **params)
+
+    # Build recent posts HTML for the home page (up to 3)
+    recent_html = ''
+    for post in blog_posts[:3]:
+        item_params = dict(params, **post)
+        item_params['summary'] = truncate(post['content'])
+        item_params['blog'] = 'writing'
+        recent_html += render(item_layout, **item_params)
+
+    # Home page gets recent posts injected
     make_pages('content/_index.html', '_site/index.html',
-               page_layout, **params)
+               page_layout, recent_posts=recent_html, render='yes', **params)
+
+    # Static pages
     make_pages('content/[!_]*.html', '_site/{{ slug }}/index.html',
                page_layout, **params)
 
-    # Create blogs.
-    blog_posts = make_pages('content/badges/*.md',
-                            '_site/badges/{{ slug }}/index.html',
-                            post_layout, blog='badges', **params)
-    news_posts = make_pages('content/agons/*.html',
+    # Agons
+    agon_posts = make_pages('content/agons/*.html',
                             '_site/agons/{{ slug }}/index.html',
                             post_layout, blog='agons', **params)
 
-    # Create blog list pages.
-    make_list(blog_posts, '_site/badges/index.html',
-              list_layout, item_layout, blog='badges', title='Badges', **params)
-    make_list(news_posts, '_site/agons/index.html',
+    # List pages
+    make_list(blog_posts, '_site/writing/index.html',
+              list_layout, item_layout, blog='writing', title='Writing', **params)
+    make_list(agon_posts, '_site/agons/index.html',
               list_layout, item_layout, blog='agons', title='Agons', **params)
 
-    # Create RSS feeds.
-   # make_list(blog_posts, '_site/blog/rss.xml',
-   #           feed_xml, item_xml, blog='blog', title='Blog', **params)
-   # make_list(news_posts, '_site/news/rss.xml',
-   #           feed_xml, item_xml, blog='news', title='News', **params)
+    # RSS feed for writing
+    make_list(blog_posts, '_site/writing/rss.xml',
+              feed_xml, item_xml, blog='writing', title='Writing', **params)
 
 
 # Test parameter to be set temporarily by unit tests.
